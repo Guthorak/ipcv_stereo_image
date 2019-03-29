@@ -5,8 +5,7 @@ argparser = argparse.ArgumentParser()
 argparser.add_argument(
     "images",
     help="List of paths to input images, left to right", 
-    nargs="+",
-    default=[])
+    nargs="+")
 
 
 if __name__ == "__main__":
