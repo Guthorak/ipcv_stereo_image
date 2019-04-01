@@ -3,7 +3,6 @@ Module containing camera calibration utilities
 """
 import numpy as np
 import cv2
-from tqdm import tqdm
 
 
 class CalibrationError(Exception):
@@ -37,7 +36,7 @@ class Calibrator:
 
     def calibrate(self) -> None:
         NROWS, NCOLS = 6, 9
-        imshape = cv2.cvtColor(cv2.imread(self._images["left"][0]), cv2.COLOR_BGR2GRAY).shape[::-1]
+        imshape = cv2.imread(self._images["left"][0], cv2.IMREAD_GRAYSCALE).shape[::-1]
         object_points, image_points_left, image_points_right = self._get_object_and_image_points(NROWS, NCOLS, 
             (self._images["left"], self._images["right"]))
         success, matrix_left, distortion_left, matrix_right, distortion_right, r, t, e, f = cv2.stereoCalibrate(
