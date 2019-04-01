@@ -12,7 +12,7 @@ class CalibrationError(Exception):
 
 class Calibrator:
 
-    def __init__(self, images_left: list, images_middle: list, images_right: list):
+    def __init__(self, images_left: list, images_right: list):
         """
         Class for calibration of stereographic camera sets using
         calibration images of chessboards        
@@ -21,38 +21,54 @@ class Calibrator:
         ----------
         images_left: list
             List of paths to left calibration images 
-        images_middle: list
-            List of paths to middle calibration images 
         images_right: list
             List of paths to right calibration images 
         """
         self._images = {
             "left": images_left,
             "right": images_right,
-            "middle": images_middle
         }
         self._calibration_matrices = {}
-        self._translation = {}
-        self._rotation = {}
         self._distortion_coefficients = {}
+        self._fundamental = None
+        self._essential = None
+        self._rotation = None
+        self._translation = None
 
     def calibrate(self) -> None:
         NROWS, NCOLS = 6, 9
-        for key, value in self._images.items():
-            print(f"Calibrating camera {key}")
-            imshape = cv2.cvtColor(cv2.imread(value[0]), cv2.COLOR_BGR2GRAY).shape[::-1]
-            object_points, image_points = self._get_object_and_image_points(NROWS, NCOLS, value)
-            success, matrix, distortion, rotation, translation = cv2.calibrateCamera(object_points, 
-                image_points, 
-                imshape,
-                None, 
-                None)
-            if not success:
-                raise CalibrationError(f"Failed to calibrate camera: {key}")
-            self._calibration_matrices[key] = matrix
-            self._translation[key] = translation
-            self._rotation[key] = rotation
-            self._distortion_coefficients[key] = distortion
+        imshape = cv2.cvtColor(cv2.imread(self._images["left"][0]), cv2.COLOR_BGR2GRAY).shape[::-1]
+        object_points, image_points_left, image_points_right = self._get_object_and_image_points(NROWS, NCOLS, 
+            (self._images["left"], self._images["right"]))
+        success, matrix_left, distortion_left, matrix_right, distortion_right, r, t, e, f = cv2.stereoCalibrate(
+            object_points,
+            image_points_left,
+            image_points_right,
+            imshape,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None)
+        if not success:
+            raise CalibrationError(f"Failed to calibrate cameras")
+        self._fundamental = f
+        self._essential = e
+        self._translation = t
+        self._rotation = r
+        self._calibration_matrices = {"left": matrix_left, "right": matrix_right}
+        self._distortion_coefficients = {"left": distortion_left, "right": distortion_right}
+
+    @property
+    def rotation(self) -> np.ndarray:
+        return self._rotation
+
+    @property
+    def translation(self) -> np.ndarray:
+        return self._translation
 
     @property
     def calibration_matrices(self) -> dict:
@@ -63,14 +79,17 @@ class Calibrator:
         return self._distortion_coefficients
 
     @property
-    def rotations(self) -> dict:
-        return self._rotation
+    def fundamental(self) -> np.ndarray:
+        self._fundamental
 
     @property
-    def translations(self) -> dict:
-        return self._translation
+    def essential(self) -> np.ndarray:
+        return self._essential
 
     def _get_object_and_image_points(self, nrows, ncols, image_set) -> tuple:
+        imgs_left, imgs_right = image_set
+        imgs_left = sorted(imgs_left)
+        imgs_right = sorted(imgs_right)
         # termination criteria
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
         # prepare object points, given chess board size
@@ -78,35 +97,44 @@ class Calibrator:
         objp[:, :2] = np.mgrid[0:ncols, 0:nrows].T.reshape(-1, 2)
 
         # arrays to store object and image points
-        object_points, image_points = [], []
+        object_points, image_points_left, image_points_right = [], [], []
 
-        for fname in tqdm(image_set):
-            image = cv2.imread(fname)
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        for fname_l, fname_r in zip(imgs_left, imgs_right):
+            image_l = cv2.imread(fname_l)
+            image_r = cv2.imread(fname_r)
+            gray_l = cv2.cvtColor(image_l, cv2.COLOR_BGR2GRAY)
+            gray_r = cv2.cvtColor(image_r, cv2.COLOR_BGR2GRAY)
 
             # find chess board corners
-            success, corners = cv2.findChessboardCorners(gray, (ncols, nrows), None)
+            success_l, corners_l = cv2.findChessboardCorners(gray_l, (ncols, nrows), None)
+            if not success_l:
+                continue
+            success_r, corners_r = cv2.findChessboardCorners(gray_r, (ncols, nrows), None)
 
-            if success:
+            if success_r:
                 object_points.append(objp)
                 # refine corners
-                corners2 = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
-                image_points.append(corners2)
+                corners_l2 = cv2.cornerSubPix(gray_l, corners_l, (11, 11), (-1, -1), criteria)
+                corners_r2 = cv2.cornerSubPix(gray_r, corners_r, (11, 11), (-1, -1), criteria)
+                image_points_left.append(corners_l2)
+                image_points_right.append(corners_r2)
         
-        return object_points, image_points
+        return object_points, image_points_left, image_points_right
         
 
 if __name__ == "__main__":
     import glob
     images_left = glob.glob("samples/calibration/*L*.jpg")
     images_right = glob.glob("samples/calibration/*R*.jpg")
-    images_middle = glob.glob("samples/calibration/*M*.jpg")
 
-    calibrator = Calibrator(images_left, images_middle, images_right)
+    calibrator = Calibrator(images_left, images_right)
     calibrator.calibrate()
 
-    for camera in ["left", "right", "middle"]:
+    for camera in ["left", "right"]:
         np.save(f"calibration/calibration_matrix_{camera}.npy", calibrator.calibration_matrices[camera])
-        np.save(f"calibration/rotation_{camera}.npy", calibrator.rotations[camera])
-        np.save(f"calibration/translation_{camera}.npy", calibrator.translations[camera])
         np.save(f"calibration/distortion_{camera}.npy", calibrator.distortion_coefficients[camera])
+        np.save(f"calibration/distortion_{camera}.npy", calibrator.distortion_coefficients[camera])
+    np.save(f"calibration/essential.npy", calibrator.essential)
+    np.save(f"calibration/fundamental.npy", calibrator.fundamental)
+    np.save(f"calibration/translation.npy", calibrator.translation)
+    np.save(f"calibration/rotation.npy", calibrator.rotation)
