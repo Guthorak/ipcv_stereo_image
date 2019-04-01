@@ -44,15 +44,12 @@ class Calibrator:
             object_points,
             image_points_left,
             image_points_right,
+            np.zeros((3, 3)),
+            None,
+            np.zeros((3, 3)),
+            None,
             imshape,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None)
+            flags=cv2.CALIB_SAME_FOCAL_LENGTH)
         if not success:
             raise CalibrationError(f"Failed to calibrate cameras")
         self._fundamental = f
@@ -80,7 +77,7 @@ class Calibrator:
 
     @property
     def fundamental(self) -> np.ndarray:
-        self._fundamental
+        return self._fundamental
 
     @property
     def essential(self) -> np.ndarray:
@@ -122,19 +119,19 @@ class Calibrator:
         return object_points, image_points_left, image_points_right
         
 
-if __name__ == "__main__":
+def calibrate(images_dir, out_dir):
     import glob
-    images_left = glob.glob("samples/calibration/*L*.jpg")
-    images_right = glob.glob("samples/calibration/*R*.jpg")
+    images_left = glob.glob(images_dir + "/*L*.jpg")
+    images_right = glob.glob(images_dir + "/*R*.jpg")
 
     calibrator = Calibrator(images_left, images_right)
     calibrator.calibrate()
 
     for camera in ["left", "right"]:
-        np.save(f"calibration/calibration_matrix_{camera}.npy", calibrator.calibration_matrices[camera])
-        np.save(f"calibration/distortion_{camera}.npy", calibrator.distortion_coefficients[camera])
-        np.save(f"calibration/distortion_{camera}.npy", calibrator.distortion_coefficients[camera])
-    np.save(f"calibration/essential.npy", calibrator.essential)
-    np.save(f"calibration/fundamental.npy", calibrator.fundamental)
-    np.save(f"calibration/translation.npy", calibrator.translation)
-    np.save(f"calibration/rotation.npy", calibrator.rotation)
+        np.save(out_dir + f"/calibration_matrix_{camera}.npy", calibrator.calibration_matrices[camera])
+        np.save(out_dir + f"/distortion_{camera}.npy", calibrator.distortion_coefficients[camera])
+        np.save(out_dir + f"/distortion_{camera}.npy", calibrator.distortion_coefficients[camera])
+    np.save(out_dir + f"/essential.npy", calibrator.essential)
+    np.save(out_dir + f"/fundamental.npy", calibrator.fundamental)
+    np.save(out_dir + f"/translation.npy", calibrator.translation)
+    np.save(out_dir + f"/rotation.npy", calibrator.rotation)
