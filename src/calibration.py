@@ -66,6 +66,7 @@ class Calibrator:
     def rotations(self) -> dict:
         return self._rotation
 
+    @property
     def translations(self) -> dict:
         return self._translation
 
@@ -103,4 +104,9 @@ if __name__ == "__main__":
 
     calibrator = Calibrator(images_left, images_middle, images_right)
     calibrator.calibrate()
-    print(calibrator.calibration_matrices)
+
+    for camera in ["left", "right", "middle"]:
+        np.save(f"calibration/calibration_matrix_{camera}.npy", calibrator.calibration_matrices[camera])
+        np.save(f"calibration/rotation_{camera}.npy", calibrator.rotations[camera])
+        np.save(f"calibration/translation_{camera}.npy", calibrator.translations[camera])
+        np.save(f"calibration/distortion_{camera}.npy", calibrator.distortion_coefficients[camera])
