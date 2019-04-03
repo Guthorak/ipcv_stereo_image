@@ -9,9 +9,10 @@ def rectify_images(right, stereo_params):
     rotation_2 = np.zeros((3, 3))
     projection_1 = np.zeros((3, 3))
     projection_2 = np.zeros((3, 3))
+    disp_to_depth = np.zeros((4, 4))
     size = right.shape
     cv2.stereoRectify(
-        stereo_params.camera_matrix_left, 
+        stereo_params.camera_matrix_left,
         stereo_params.distortion_left,
         stereo_params.camera_matrix_right,
         stereo_params.distortion_right,
@@ -21,16 +22,17 @@ def rectify_images(right, stereo_params):
         rotation_1,
         rotation_2,
         projection_1,
-        projection_2
+        projection_2,
+        Q=disp_to_depth
         )
     map1, map2 = cv2.initUndistortRectifyMap(
-        stereo_params.camera_matrix_right, 
-        stereo_params.distortion_right, 
-        rotation_2, 
-        stereo_params.camera_matrix_right, 
+        stereo_params.camera_matrix_right,
+        stereo_params.distortion_right,
+        rotation_2,
+        stereo_params.camera_matrix_right,
         size[1::-1],
         cv2.CV_32FC1)
-    return cv2.remap(right, map1, map2, cv2.INTER_LINEAR)
+    return cv2.remap(right, map1, map2, cv2.INTER_LINEAR), disp_to_depth
 
 
 if __name__ == "__main__":
@@ -40,7 +42,7 @@ if __name__ == "__main__":
     left_img = cv2.imread("samples/subjects/1/subject1_Left_1.jpg")
     right_img = cv2.imread("samples/subjects/1/subject1_Right_1.jpg", cv2.IMREAD_GRAYSCALE)
 
-    right_rect = rectify_images(right_img, STEREO_PARAMS)
+    right_rect, _ = rectify_images(right_img, STEREO_PARAMS)
 
     fig = plt.figure()
     ax = fig.add_subplot(121)

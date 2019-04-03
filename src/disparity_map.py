@@ -4,21 +4,8 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 
-if __name__ == '__main__':
     
-    image_left = cv2.imread('src/subject1_Left_1.jpg', cv2.IMREAD_GRAYSCALE)
-    image_middle = cv2.imread('src/subject1_Middle_1.jpg', cv2.IMREAD_GRAYSCALE)
-    image_right = cv2.imread('src/subject1_Right_1.jpg', cv2.IMREAD_GRAYSCALE)
-    
-    print(image_left)
-    
-    stereo = cv2.StereoBM_create(512, 5) # NumDesparities, BoxSize
-    disparity = stereo.compute(image_left, image_middle)
-    
-    plt.imshow(disparity)
-    plt.show()
-    
-def DisparityMapper(image_left, image_right, num_desparities, box_size):
+def disparity_map(image_left, image_right, min_disparities, num_desparities, box_size):
 
     '''
     Class for determining the disparity between two images
@@ -34,6 +21,15 @@ def DisparityMapper(image_left, image_right, num_desparities, box_size):
     box_size
         size of block compared by algorithm. Size should be odd as block is centered at current pixel
     '''
-    stereo = cv2.StereoBM_create(num_desparities, box_size)
-    disparity_map = stereo.compute(image_left, image_right)
-    return disparity_map
+    window_size = 3
+    stereo = cv2.StereoSGBM_create(
+        minDisparity=min_disparities, 
+        numDisparities=num_desparities, 
+        blockSize=box_size,
+        disp12MaxDiff=1,
+        uniquenessRatio=10,
+        speckleWindowSize=100,
+        speckleRange=32,
+        P1 = 8*3*window_size**2,
+        P2 = 32*3*window_size**2)
+    return stereo.compute(image_left, image_right)
