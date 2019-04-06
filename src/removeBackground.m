@@ -7,6 +7,7 @@ function out = removeBackground(image)
 	% remove everything but the face
 	mask = imfill(edges, 'holes');
 	out = uint8(image) .* uint8(mask);
+  out(find(out == 0)) = NaN;
 end
 
 
