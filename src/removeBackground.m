@@ -1,4 +1,4 @@
-function out = removeBackground(image)
+function [out, mask] = removeBackground(image)
 	% detect the face edges
 	edges = findFaceContour(image);
 	% make edges fully connected
@@ -7,7 +7,7 @@ function out = removeBackground(image)
 	% remove everything but the face
 	mask = imfill(edges, 'holes');
 	out = uint8(image) .* uint8(mask);
-  out(find(out == 0)) = NaN;
+  %out(find(out == 0)) = NaN;
 end
 
 
