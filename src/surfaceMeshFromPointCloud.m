@@ -1,5 +1,5 @@
 function mesh = surfaceMeshFromPointCloud(pc, disparityMap, J1, res)
-  unreliable = disparityMap == -realmax('single');
+  unreliable = disparityMap == 0;
   %% Matlab code for creating a 3D surface mesh
   %% create a connectivity structure
   [M, N] = size(disparityMap);
