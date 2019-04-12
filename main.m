@@ -22,6 +22,9 @@ sigma = 2;
 
 pc = mergePointClouds(pclm, pcmr, 10, stereoParamsLM, stereoParamsMR);
 
+pc = pointCloud(pc.Location(find(pc.Location(:, 3) > 1200), :), 'Color', pc.Color(find(pc.Location(:, 3) > 1200), :));
+pc = pointCloud(pc.Location(find(pc.Location(:, 3) < 1800), :), 'Color', pc.Color(find(pc.Location(:, 3) < 1800), :));
+
 player3d = pcplayer(pc.XLimits, pc.YLimits, pc.ZLimits);
 view(player3d, pc);
 
