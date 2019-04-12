@@ -9,7 +9,6 @@ load('calibration/calibmr.mat');
 image_left = imread('samples/subjects/1/subject1_Left_1.jpg');
 image_middle = imread('samples/subjects/1/subject1_Middle_1.jpg');
 image_right = imread('samples/subjects/1/subject1_Right_1.jpg');
-    %pc1_alignef = pctransform(pc1, tform1); pc2_aligned = pctransform(pc2, tform2);
 
 drange = [160, 416];
 
@@ -22,6 +21,9 @@ sigma = 2;
 [im_mid_rect2, im_right_rect] = rectifyStereoImages(image_middle, image_right, stereoParamsMR, 'OutputView', 'full');
 
 pc = mergePointClouds(pclm, pcmr, 10, stereoParamsLM, stereoParamsMR);
+
+pc = pointCloud(pc.Location(find(pc.Location(:, 3) > 1200), :), 'Color', pc.Color(find(pc.Location(:, 3) > 1200), :));
+pc = pointCloud(pc.Location(find(pc.Location(:, 3) < 1800), :), 'Color', pc.Color(find(pc.Location(:, 3) < 1800), :));
 
 player3d = pcplayer(pc.XLimits, pc.YLimits, pc.ZLimits);
 view(player3d, pc);
