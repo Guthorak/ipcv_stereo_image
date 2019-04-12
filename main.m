@@ -9,6 +9,7 @@ load('calibration/calibmr.mat');
 image_left = imread('samples/subjects/1/subject1_Left_1.jpg');
 image_middle = imread('samples/subjects/1/subject1_Middle_1.jpg');
 image_right = imread('samples/subjects/1/subject1_Right_1.jpg');
+    %pc1_alignef = pctransform(pc1, tform1); pc2_aligned = pctransform(pc2, tform2);
 
 drange = [160, 416];
 
