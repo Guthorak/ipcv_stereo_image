@@ -6,9 +6,9 @@ addpath('src');
 load('calibration/caliblm.mat');
 load('calibration/calibmr.mat');
 
-image_left = imread('samples/subjects/1/subject1_Left_1.jpg');
-image_middle = imread('samples/subjects/1/subject1_Middle_1.jpg');
-image_right = imread('samples/subjects/1/subject1_Right_1.jpg');
+image_left = imread('samples/subjects/2/subject2_Left_1.jpg');
+image_middle = imread('samples/subjects/2/subject2_Middle_1.jpg');
+image_right = imread('samples/subjects/2/subject2_Right_1.jpg');
 
 drange = [160, 416];
 
@@ -22,19 +22,11 @@ sigma = 2;
 
 pc = mergePointClouds(pclm, pcmr, 10, stereoParamsLM, stereoParamsMR);
 
-%figure;
-%subplot(1, 2, 1);
-%imshow(dmlm, drange);
-%subplot(1, 2, 2);
-%imshow(dmmr, drange);
-%colormap jet;
-%colorbar;
+figure;
+subplot(1, 2, 1);
+imshow(dmlm, drange);
+subplot(1, 2, 2);
+imshow(dmmr, drange);
+colormap jet;
+colorbar;
 
-
-
-%meshlm = surfaceMeshFromPointCloud(pclm, dmlm, im_mid_rect1, 10);
-%meshmr = surfaceMeshFromPointCloud(pcmr, dmmr, im_mid_rect2, 10);
-
-%imshow(dmlm, [0, 128]);
-%colormap jet;
-%colorbar
